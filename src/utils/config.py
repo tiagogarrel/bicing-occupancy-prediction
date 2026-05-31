@@ -53,6 +53,49 @@ FEATURES = [
 
 TARGET = "target_occ"
 
+# ---------------------------------------------------------------------------
+# V2 feature set — used by 02b_feature_engineering_v2.ipynb
+# ---------------------------------------------------------------------------
+
+DATASET_FILE_V2 = PATHS["processed"] / "bicing_model_dataset_v2.parquet"
+
+FEATURES_V2 = [
+    # --- Cyclic temporal (current time T) ---
+    # month_sin/cos removed: hist_mean_occ already encodes the seasonal pattern
+    # per (station, hour, dow), so month adds redundancy without signal.
+    "hour_sin", "hour_cos",
+    "dow_sin",  "dow_cos",
+    # Cyclic temporal (target time T+h)
+    "target_hour_sin", "target_hour_cos",
+    # Day type
+    # is_weekend removed: dow_sin/cos already encode it; keeping both is redundant.
+    "is_holiday",
+    "is_holiday_tomorrow",   # horizon>=12h: tomorrow's pattern matters
+    # Weather
+    "temperature", "precipitation", "windspeed",
+    # --- Occupancy history (richer lag set) ---
+    "current_occ",          # strongest predictor for short horizons
+    "lag_1h",               # very recent state
+    "lag_2h",
+    "lag_3h",
+    "lag_24h",              # same station ~24h ago (via 18-step shift)
+    "lag_48h",              # 2 days ago
+    "lag_168h",             # same day-of-week last week
+    "rolling_mean_3h",      # trend in last 3h
+    "rolling_mean_6h",      # medium-term trend
+    "rolling_mean_24h",     # daily average trend
+    "hist_mean_occ",        # long-run (station, hour, dow) baseline — train only
+    # --- Station features ---
+    "dist_beach", "dist_center",
+    "capacity",
+    # --- Neighbor context ---
+    # Mean occupancy of the N nearest stations at time T.
+    # Captures flow: when neighbors fill up, this station tends to fill up too.
+    "neighbor_mean_occ",
+    # --- Horizon ---
+    "horizon_hours",
+]
+
 RANDOM_STATE = 42
 
 # Reference points for distance features
